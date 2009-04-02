@@ -1,0 +1,206 @@
+
+\newpage
+[% USE score_formatter = format('%.2f') %]
+\section*{Vyhodnotenie súťaže degustácie vín}
+
+\subsection*{Najlepšie hodnotené vína}
+
+\begin{longtable}{ @{}c m{48mm} m{40mm} l c c c }
+\textbf{\emph{Č.vz.}} & \textbf{\emph{Producent}} & \textbf{\emph{Odroda}} & \textbf{\emph{Prívlastok}} & & \textbf{\emph{Roč.}} & \textbf{\emph{Body}} \tabularnewline
+
+[%- FOR row IN SQL("SELECT * FROM top_wines") -%]
+
+  [%- row.id -%] & [%- row.producer_family_name -%], [%- row.producer_name -%] & [%- row.variety -%] & [%- row.attribute -%] & [%- row.category -%] & [%- row.year -%] & [%- score_formatter(row.score) -%] \tabularnewline
+
+[% END %]
+\end{longtable}
+
+%%%%%%%%%%%%%
+%% Vysledky podla odrod
+%%%%%%%%%%%%%
+
+\section*{Vzorky zoradené podľa odrôd}
+[%- SET variable = "" -%]
+[%- SET table_trailer = "" -%]
+  
+[%- FOR row IN SQL("SELECT * FROM results_per_variety") -%]
+
+  [%- IF variable != "" -%]
+    [% SET table_trailer = "\\end{longtable}" %]
+  [%- END -%]
+
+  [%- IF variable != row.variety -%]
+    [%- SET variable = row.variety -%]
+
+    [%- GET table_trailer -%]
+
+    \subsection*{[% row.variety %]}
+
+    [%- FOR descr IN SQL("SELECT description FROM varieties WHERE name = '${row.variety}'") -%]
+      [% GET descr.description %]
+    [%- END -%]
+
+    \begin{longtable}{c l c c m{80mm} c c}
+\textbf{\emph{Č.vz.}} & \textbf{\emph{Prívlastok}} & \textbf{\emph{Roč.}} &  & \textbf{\emph{Producent}} & \multicolumn{2}{c}{\textbf{Body}}\tabularnewline
+\endhead
+\textbf{\emph{Č.vz.}} & \textbf{\emph{Prívlastok}} & \textbf{\emph{Roč.}} &  & \textbf{\emph{Producent}} & \multicolumn{2}{c}{\textbf{Body}}\tabularnewline
+\endfirsthead
+
+  [%- END -%]
+
+  [% row.id %] & [% row.attribute %] & [% row.year %] & [% row.category %] & [% row.producer_family_name %] [% row.producer_name -%], [% row.producer_address -%] &
+  [%- IF row.score.length < 2 -%]
+    &
+  [%- ELSE -%]
+    [% score_formatter(row.score) %] & 
+  [%- END -%]
+  [% row.medal %]\tabularnewline
+[%- END -%]
+\end{longtable}  
+
+
+
+
+%%%%%%%%%%%%%%%%
+%% Vysledky podla producentov
+%%%%%%%%%%%%%%%%
+
+%%\newpage
+
+\section*{Vzorky zoradené podľa producentov}
+
+[% FOR prow IN SQL("SELECT * FROM producers WHERE producer_id IN (SELECT producer_id FROM wines) ORDER BY family_name,name") %]
+
+  \subsection*{[%- prow.family_name %] [% prow.name -%], [% prow.address -%]}
+
+  \vspace{-5mm}
+
+  \begin{longtable}{ c l l c c c c }
+\textbf{\emph{Č.vz.}} & \textbf{\emph{Odroda}} & \textbf{\emph{Prívlastok}} & \textbf{\emph{Ročník}} & & \multicolumn{2}{c}{\textbf{Body}}\tabularnewline
+\endhead
+\textbf{\emph{Č.vz.}} & \textbf{\emph{Odroda}} & \textbf{\emph{Prívlastok}} & \textbf{\emph{Ročník}} & & \multicolumn{2}{c}{\textbf{Body}}\tabularnewline
+\endfirsthead
+ 
+  [% FOR wrow IN SQL("SELECT * FROM wines_summary WHERE producer_family_name = '${prow.family_name}' AND producer_name = coalesce(null,'${prow.name}') ") %]
+
+  [% wrow.id %] & [% wrow.variety %] & [% wrow.attribute %] & [% wrow.year %] & [% wrow.category %] & 
+  [% IF wrow.score.length < 2 -%]
+    &
+  [%- ELSE -%]
+    [% score_formatter(wrow.score) %] & 
+  [%- END %]
+  [% wrow.medal %]\tabularnewline
+
+  [% END %]
+\end{longtable}
+
+[% END %]
+
+
+%%%%%%%%%%%%%%%
+%% Statisticke udaje
+%%%%%%%%%%%%%%%
+\twocolumn
+
+\section*{Štatistické informácie}
+
+[%
+medals = {
+  'BM' => 'Bronzová medaila',
+  'SM' => 'Strieborná medaila',
+  'ZM' => 'Zlatá medaila',
+  '' => 'Bez ocenenia'
+};
+%]
+
+[% BLOCK twocolumntable %]
+
+  \vspace{9mm}
+  %%\subsection*{[% title %]}
+  \begin{center}
+  \tablefirsthead{\multicolumn{2}{l}{\textbf{[% title %]}}\\}
+  \tabletail{\hline \multicolumn{2}{r}{\emph{ďalej ...}}\\}
+  \tablehead{\multicolumn{2}{l}{\emph{... pokračovanie}}\\}
+  
+  \begin{xtabular}{lc}
+  [% FOR row IN data %]
+    \hline
+    [% row.lcol %] & [% row.rcol %]\tabularnewline
+  [% END %]
+  \hline
+  \end{xtabular}
+  \end{center}
+[% END %]
+
+
+%%%%%%%%%%%%%%%%
+%% Pocty v jednotlivych odrodach
+%%%%%%%%%%%%%%%%
+
+[% INCLUDE twocolumntable title = 'Zastúpenie odrôd' data = SQL("SELECT variety AS lcol, count(*) AS rcol FROM wines_summary GROUP BY variety ORDER BY variety") %]
+
+
+%%%%%%%%%%%%%%%%
+%% Pocet jednotlivych vzoriek
+%%%%%%%%%%%%%%%%
+
+[% INCLUDE twocolumntable title = 'Počet vzoriek' data = SQL("SELECT color AS lcol, count(*) AS rcol FROM wines_summary GROUP BY color ORDER BY color") %]
+
+
+
+%%%%%%%%%%%%%%%%
+%%  Statistika privlastkov
+%%%%%%%%%%%%%%%%
+
+[% INCLUDE twocolumntable title = 'Prívlastky' data = SQL("SELECT attribute AS lcol, count(*) AS rcol FROM wines_summary GROUP BY attribute ORDER BY attribute") %]
+
+
+
+
+%%%%%%%%%%%%%%%%
+%% Statistika rocnikov
+%%%%%%%%%%%%%%%%
+
+[% INCLUDE twocolumntable title = 'Ročníky' data = SQL("SELECT year AS lcol, count(*) AS rcol FROM wines_summary GROUP BY year") %]
+
+
+
+%%%%%%%%%%%%%%%%
+%% Priemerne hodnotenie
+%%%%%%%%%%%%%%%%
+
+[% USE score_formatter = format('%.2f') %]
+[% data = SQL("SELECT color AS lcol, AVG(score) AS rcol  FROM wines_summary GROUP BY color") %]
+[% FOREACH row IN data %]
+  [% row.rcol = score_formatter(row.rcol) %]
+[% END %]
+[% INCLUDE twocolumntable title = 'Priemerné hodnotenie' data = data %]
+
+
+
+%%%%%%%%%%%%%%%%
+%% Pocet medaili
+%%%%%%%%%%%%%%%%
+
+[% data = SQL("SELECT medal AS lcol, total AS rcol FROM medals_distribution") %]
+
+[% FOREACH row IN data %]
+  [% row.lcol = medals.item(row.lcol) %]
+[% END %]
+
+[% INCLUDE twocolumntable title = 'Počet medailí' data = data %]
+
+%%%%%%%%%%%%%%%%
+%% Zastupenie vyrobcov
+%%%%%%%%%%%%%%%%
+
+
+[% INCLUDE twocolumntable title = 'Zastúpenie výrobcov' data = SQL("SELECT address AS lcol, count AS rcol FROM results_addresses") %]
+
+
+%% Put some ad here
+%%\vfill
+%%\begin{center}
+%%\includegraphics[width=0.8\columnwidth]{/home/rusko/documents/tatik/vinalia08/includes/reklama01_vert.png}
+%%\end{center}
+\onecolumn
