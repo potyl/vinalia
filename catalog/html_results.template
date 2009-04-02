@@ -1,0 +1,243 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+  <title>Výsledky súťaže Biel Vinalia 2009</title>
+  <meta name="GENERATOR" content="Quanta Plus">
+  <meta name="AUTHOR" content="Martin Rusko">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="KEYWORDS" content="wine, competition, velky biel, vinalia">
+  <link rel="stylesheet" type="text/css" href="bielvinalia.css">
+</head>
+<body>
+
+<!--
+%%%%%%%%%%%%%
+%% Vysledky podla odrod
+%%%%%%%%%%%%%
+-->
+
+<h1>Vyhodnotenie súťaže degustácie vín Biel Vinalia 2009</h1>
+
+<div class="toc">
+<h4><a name="toc"></a>Obsah</h4>
+<ul>
+  <li><a href="#top12">Najlepšie hodnotené vína</a></li>
+  <li><a href="#per_variety">Vzorky zoradené podľa odrôd</a></li>
+  <li><a href="#statistics">Štatistické informácie</a></li>
+  <ul>
+    <li><a href="#Zastúpenie odrôd">Zastúpenie odrôd</a></li>
+    <li><a href="#Počet vzoriek">Počet vzoriek</a></li>
+    <li><a href="#Priemerné hodnotenie">Priemerné hodnotenie</a></li>
+    <li><a href="#Prívlastky">Prívlastky</a></li>
+    <li><a href="#Zastúpenie ročníkov">Zastúpenie ročníkov</a></li>
+    <li><a href="#Počet medailí">Počet medailí</a></li>
+    <li><a href="#Zastúpenie výrobcov">Zastúpenie výrobcov</a></li>
+  </ul>
+  <li><a href="#per_producer">Vzorky zoradené podľa producentov</a></li>
+</ul>
+</div>
+
+[% USE score_formatter = format('%.2f') %]
+<h2><a name="top12" id="top12"></a>Najlepšie hodnotené vína</h2>
+
+<table cellspacing="0" cellpadding="3px">
+  <thead>
+    <tr>
+      <td class="left-text-align">Č.vz.</td><td class="left-text-align">Producent</td><td class="left-text-align">Odroda</td><td>Prívlastok</td><td>&nbsp;</td><td>Roč.</td><td colspan="2">Body</td>
+    </tr>
+  </thead>
+  <tbody>
+
+[%- FOR row IN SQL("SELECT * FROM top_wines") -%]
+    <tr>
+      <td class="left-text-align">[%- row.id -%]</td><td class="left-text-align">[%- row.producer_family_name -%], [%- row.producer_name -%]</td><td class="left-text-align">[%- row.variety -%]</td><td>[%- row.attribute -%]</td><td>[%- row.category -%]</td><td>[%- row.year -%]</td><td>[%- score_formatter(row.score) -%]</td><td>[%- row.medal -%]</td>
+    </tr>
+[% END %]
+  </tbody>
+</table>
+
+<h2><a name="per_variety" id="per_variety"></a>Vzorky zoradené podľa odrôd</h2>
+<div class="backlink"><a href="#toc">Späť na obsah</a></div>
+[%- SET variable = "" -%]
+[%- SET table_trailer = "" -%]
+  
+[%- FOR row IN SQL("SELECT * FROM results_per_variety") -%]
+
+  [%- IF variable != "" -%]
+    [% SET table_trailer = "</tbody></table>" %]
+  [%- END -%]
+
+  [%- IF variable != row.variety -%]
+    [%- SET variable = row.variety -%]
+
+    [%- GET table_trailer -%]
+
+    <h3>[% row.variety %]</h3>
+
+
+<table cellspacing="0" cellpadding="3px">
+  <thead>
+    <tr>
+      <td class="left-text-align">Č.vz.</td><td>Prívlastok</td><td>Roč.</td><td>&nbsp;</td><td class="left-text-align">Producent</td><td colspan="2">Body</td>
+    </tr>
+  </thead>
+  <tbody>
+  [%- END -%]
+    <tr>
+      <td class="left-text-align">[% row.id %]</td>
+      <td>[% row.attribute %]</td><td>[% row.year %]</td>
+      <td>[% row.category %]</td>
+      <td class="left-text-align">[% row.producer_family_name %] [% row.producer_name -%], [% row.producer_address -%]</td>
+  [%- IF row.score.length < 2 -%]
+      <td>&nbsp;</td>
+  [%- ELSE -%]
+      <td>[% score_formatter(row.score) %]</td>
+  [%- END -%]
+      <td>[% row.medal %]</td>
+    </tr>
+[%- END -%]
+  </tbody>
+</table>
+
+<!--
+%%%%%%%%%%%%%%%
+%% Statisticke udaje
+%%%%%%%%%%%%%%%
+-->
+
+<h2><a name="statistics"></a>Štatistické informácie</h2>
+<div class="backlink"><a href="#toc">Späť na obsah</a></div>
+
+[%
+medals = {
+  'BM' => 'Bronzová medaila',
+  'SM' => 'Strieborná medaila',
+  'ZM' => 'Zlatá medaila',
+  '' => 'Bez ocenenia'
+};
+%]
+
+[% BLOCK twocolumntable %]
+
+  <h3><a name="[% title %]"></a>[% title %]</h3>
+  <div class="backlink"><a href="#toc">Späť na obsah</a></div>
+
+  <table cellspacing="0" cellpadding="3px">
+  <tbody>
+  [% FOR row IN data %]
+    <tr>
+      <td class="left-text-align">[% row.lcol %]</td><td>[% row.rcol %]</td>
+    </tr>
+  [% END %]
+  </tbody>
+</table>
+[% END %]
+
+
+<!--
+%%%%%%%%%%%%%%%%
+%% Pocty v jednotlivych odrodach
+%%%%%%%%%%%%%%%%
+-->
+
+[% INCLUDE twocolumntable title = 'Zastúpenie odrôd' data = SQL("SELECT variety AS lcol, count(*) AS rcol FROM wines_summary GROUP BY variety ORDER BY variety") %]
+
+
+<!--
+%%%%%%%%%%%%%%%%
+%% Pocet jednotlivych vzoriek
+%%%%%%%%%%%%%%%%
+-->
+
+[% INCLUDE twocolumntable title = 'Počet vzoriek' data = SQL("SELECT color AS lcol, count(*) AS rcol FROM wines_summary GROUP BY color ORDER BY color") %]
+
+<!--
+%%%%%%%%%%%%%%%%
+%% Priemerne hodnotenie
+%%%%%%%%%%%%%%%%
+-->
+
+[% USE score_formatter = format('%.2f') %]
+[% data = SQL("SELECT color AS lcol, AVG(score) AS rcol  FROM wines_summary GROUP BY color") %]
+[% FOREACH row IN data %]
+  [% row.rcol = score_formatter(row.rcol) %]
+[% END %]
+[% INCLUDE twocolumntable title = 'Priemerné hodnotenie' data = data %]
+
+<!--
+%%%%%%%%%%%%%%%%
+%%  Statistika privlastkov
+%%%%%%%%%%%%%%%%
+-->
+
+[% INCLUDE twocolumntable title = 'Prívlastky' data = SQL("SELECT attribute AS lcol, count(*) AS rcol FROM wines_summary GROUP BY attribute ORDER BY attribute") %]
+
+<!--
+%%%%%%%%%%%%%%%%
+%% Statistika rocnikov
+%%%%%%%%%%%%%%%%
+-->
+
+[% INCLUDE twocolumntable title = 'Zastúpenie ročníkov' data = SQL("SELECT year AS lcol, count(*) AS rcol FROM wines_summary GROUP BY year") %]
+
+<!--
+%%%%%%%%%%%%%%%%
+%% Pocet medaili
+%%%%%%%%%%%%%%%%
+-->
+
+[% data = SQL("SELECT medal AS lcol, total AS rcol FROM medals_distribution") %]
+
+[% FOREACH row IN data %]
+  [% row.lcol = medals.item(row.lcol) %]
+[% END %]
+
+[% INCLUDE twocolumntable title = 'Počet medailí' data = data %]
+
+<!--
+%%%%%%%%%%%%%%%%
+%% Zastupenie vyrobcov
+%%%%%%%%%%%%%%%%
+-->
+
+[% INCLUDE twocolumntable title = 'Zastúpenie výrobcov' data = SQL("SELECT address AS lcol, count AS rcol FROM results_addresses") %]
+
+
+<!--
+%%%%%%%%%%%%%%%%
+%% Vysledky podla producentov
+%%%%%%%%%%%%%%%%
+-->
+
+<h2><a name="per_producer" id="per_producer"></a>Vzorky zoradené podľa producentov</h2>
+<div class="backlink"><a href="#toc">Späť na obsah</a></div>
+
+[% FOR prow IN SQL("SELECT * FROM producers WHERE producer_id IN (SELECT producer_id FROM wines) ORDER BY family_name,name") %]
+
+  <h3>[%- prow.family_name %] [% prow.name -%], [% prow.address -%]</h3>
+
+<table cellspacing="0" cellpadding="3px">
+  <tbody> 
+  [% FOR wrow IN SQL("SELECT * FROM wines_summary WHERE producer_family_name = '${prow.family_name}' AND producer_name = coalesce(null,'${prow.name}') ") %]
+    <tr>
+      <td class="left-text-align">[% wrow.id %]</td>
+      <td class="left-text-align">[% wrow.variety %]</td>
+      <td>[% wrow.attribute %]</td>
+      <td>[% wrow.year %]</td>
+      <td>[% wrow.category %]</td>
+    [% IF wrow.score.length < 2 -%]
+      <td>&nbsp;</td>
+    [%- ELSE -%]
+      <td>[% score_formatter(wrow.score) %]</td>
+    [%- END %]
+      <td>[% wrow.medal %]</td>
+    </tr>
+  [% END %]
+  </tbody>
+</table>
+
+[% END %]
+
+</body>
+</html>
