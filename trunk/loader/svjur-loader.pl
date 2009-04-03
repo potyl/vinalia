@@ -26,6 +26,8 @@ my $tbl_varieties = {};
 my $tbl_producers = {};
 my $tbl_colors = {};
 my $tbl_categories = {};
+my $tbl_attributes = {};
+$tbl_attributes->{idx} = 0;
 
 foreach my $wine ( @{$wines} ) {
 
@@ -40,7 +42,7 @@ foreach my $wine ( @{$wines} ) {
 	#$wine->{attribute_id} = $aid;
 
 	my $sql = "INSERT INTO wines (wine_id,producer_id,variety_id,attribute_id,category_id,year) ";
-	$sql .= "VALUES (" . $wine->{wine_id} . ",$pid,$vid,$aid,$cid," . $wine->{year} . ");\n";
+	$sql .= "VALUES (" . $wine->{wine_id} . ",$pid,$vid,$aid,$cid,'" . $wine->{year} . "');";
 
 	$wine->{sql} = $sql; 
 
@@ -48,6 +50,7 @@ foreach my $wine ( @{$wines} ) {
 }
 
 print Dumper($tbl_wines);
+print Dumper($tbl_attributes);
 
 
 ## SUB ROUTINES ##
@@ -68,8 +71,37 @@ sub get_category_id {
 }
 
 sub get_attribute_id {
-	
-	return 1;
+
+	my $attribute = shift @_;
+
+	my %trans = (
+		'HV' => 'hrozienkový výber',
+		'BV' => 'bobuľový výber',
+		'VzH' => 'výber z hrozna',
+		'KAB' => 'kabinetné',
+		'NZ' => 'neskorý zber',
+		);		
+
+	my $pattern = join "|", keys %trans;
+	$pattern = qr/($pattern)/;
+
+	$attribute =~ s/$pattern/$trans{$1}/gei;
+
+	$attribute = 'akostné' unless ($attribute);
+
+	unless ($tbl_attributes->{$attribute}) {
+		
+		$tbl_attributes->{$attribute}->{attribute_id} = ++$tbl_attributes->{idx};
+		$tbl_attributes->{$attribute}->{name} = $attribute;
+
+		my $sql = "INSERT INTO attributes (name,attribute_id) VALUES ('$attribute',";
+		$sql .= $tbl_attributes->{$attribute}->{attribute_id} . ");";
+
+		$tbl_attributes->{$attribute}->{sql} = $sql;
+	}
+
+	return $tbl_attributes->{$attribute}->{attribute_id};
+		
 }
 
 # 
