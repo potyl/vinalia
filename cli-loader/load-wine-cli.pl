@@ -28,7 +28,7 @@ sub main {
 	
 	# Connect to the database
 	my $dbi = DBI->connect(
-		"dbi:Pg:dbname=vinalia;host=127.0.0.1", 
+		"dbi:Pg:dbname=svjur;host=127.0.0.1", 
 		"vinalia", 
 		"vino", 
 		{
