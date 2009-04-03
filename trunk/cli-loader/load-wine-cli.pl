@@ -34,8 +34,10 @@ sub main {
 		{
 			AutoCommit => 1,
 			RaiseError => 1,
+			PrintError => 0,
 		}
 	);
+	#$dbi->trace('SQL');
 	
 	my $select_score = $dbi->prepare("SELECT * FROM scores WHERE wine_id = ? AND judge_id = ?");
 	my $update_score = $dbi->prepare("UPDATE scores SET score = ? WHERE score_id = ?");
@@ -73,36 +75,64 @@ sub main {
 			next;
 		}
 		
+		my $group_id = $wine->{group_id};
+		
 		# Find the judges
-		my $judges = $groups{$wine->{group_id}};
+		my $judges = $groups{$group_id};
 		if (!$judges) {
 			print $OUT "Can't find the judges!\n";
 			next;
 		}
 		
 		# Ask the scores of each judge
+		my @scores = ();
+		my $i = 0;
 		JUDGE:
 		foreach my $judge (@{ $judges }) {
-			
-			my $name = "$judge->{judge_id}) $judge->{name} $judge->{family_name}";
+			my $judge_letter = chr(ord('A') + $i++);
+			my $name = "Group $group_id - Judge $judge_letter";
 			
 			# Find the score of the judge
 			my $score = get_object($dbi, $select_score, $wine_id, $judge->{judge_id});
 			if ($score) {
 				# Display the old value, allow the user to change it
-				my $value = ask_number($term, "$name [$score->{score}]", 1);
+				push @scores, $score->{score};
+				my $value = ask_score($term, "$name [$score->{score}]", 1);
+				
 				last WINE unless defined $value;
 				next JUDGE if $value eq "";
-				$update_score->execute($value, $score->{score_id});
+				
+				eval {
+					$update_score->execute($value, $score->{score_id});
+					$scores[-1] = $value;
+				};
+				if (my $error = $@) {
+#					print "Error: $error\n";
+					print "ERROR: Correct the score for judge: $judge_letter wine: $wine_id\n";
+				}
 			}
 			else {
 				# Ask for a new value
-				my $value = ask_number($term, "$name");
+				my $value = ask_score($term, "$name");
+				
 				last WINE unless defined $value;
 
-				$insert_score->execute($judge->{judge_id}, $wine_id, $value);
+				eval {
+					$insert_score->execute($judge->{judge_id}, $wine_id, $value);
+					push @scores, $value;
+				};
+				if (my $error = $@) {
+#					print "Error: $error\n";
+					print "ERROR: Correct the score for judge: $judge_letter wine: $wine_id\n";
+				}
 			}
 		}
+		
+		# Show a short summary
+		print "---------\n";
+		print "Scores: ", join(', ', @scores), "\n";
+		print "---------\n";
+		print "\n\n";
 	}
 	
 	
@@ -132,6 +162,31 @@ sub ask_number {
 		elsif ($allow_empty && $input =~ /^\s*$/) {
 			return "";
 		}
+	}
+}
+
+
+#
+# Ask the user for a score. This function will return undef if there's no more
+# input. If empty numbers are allowed and no number is given then "" will be
+# returned otherwise the given number will be returned.
+#
+# A score is a number in the range [40, 100]
+#
+sub ask_score {
+	my ($term, $prompt, $allow_empty) = @_;
+	
+	# Get the user's value
+	while (1) {
+		my $score = ask_number($term, $prompt, $allow_empty);
+		
+		return undef unless defined $score;
+		return "" if $allow_empty and $score =~ /^\s*$/;
+		
+		# NOT wanted yet as the user is not watching the screen
+#		next unless $score >= 40 and $score <= 100;		
+		
+		return $score;		
 	}
 }
 
