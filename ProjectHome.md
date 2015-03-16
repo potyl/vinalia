@@ -1,0 +1,1 @@
+Vinalia consists of a collection of scripts and a database schema that are used in the Veľký Biel  wine competition.
